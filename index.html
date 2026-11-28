@@ -68,9 +68,25 @@ if(isAdmin())unsubs.push(db.collection('usuarios').onSnapshot(q=>{usersCache={};
 if(CLOUD){firebase.initializeApp(FIREBASE_CONFIG);auth=firebase.auth();db=firebase.firestore();
 auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{});
 auth.onAuthStateChanged(u=>{if(u&&loggedIn())startCloudSync();else if(!u&&loggedIn()){stopCloudSync();sessionStorage.removeItem(sessionKey);sessionStorage.removeItem(roleKey);sessionStorage.removeItem('davase_user');syncSession()}})}
+function authMsg(e){const c=e&&e.code||'';
+if(c==='auth/operation-not-allowed')return 'Falta activar "Correo electrónico/contraseña" en Firebase (Authentication → Método de acceso).';
+if(c==='auth/too-many-requests')return 'Demasiados intentos. Espera unos minutos e intenta de nuevo.';
+if(c==='auth/network-request-failed')return 'Sin conexión con el servidor. Revisa tu internet.';
+if(c==='auth/user-disabled')return 'Esta cuenta está deshabilitada en Firebase.';
+if(c==='auth/invalid-email')return 'Usuario no válido.';
+if(['auth/user-not-found','auth/wrong-password','auth/invalid-credential','auth/invalid-login-credentials'].includes(c))return 'Usuario o contraseña incorrectos.';
+return 'No se pudo ingresar ('+(c||e.message||'error')+').'}
 async function cloudLogin(u,p){
-try{await auth.signInWithEmailAndPassword(u+'@'+MAIL_DOM,p)}catch(e){return {err:'Usuario o contraseña incorrectos.'}}
-let d;try{d=await db.collection('usuarios').doc(u).get()}catch(e){await auth.signOut();return {err:'No se pudo verificar tu cuenta. Intenta de nuevo.'}}
+const email=u+'@'+MAIL_DOM;
+try{await auth.signInWithEmailAndPassword(email,p)}catch(e){
+if(u==='administrador'&&['auth/user-not-found','auth/invalid-credential','auth/invalid-login-credentials'].includes(e.code)&&p.length>=6&&confirm('No se pudo entrar como administrador.\n\nSi la cuenta del administrador todavía no existe, ¿quieres crearla ahora con la contraseña que escribiste?')){
+try{await auth.createUserWithEmailAndPassword(email,p)}catch(e2){return {err:e2.code==='auth/email-already-in-use'?'La cuenta del administrador ya existe: la contraseña es incorrecta.':authMsg(e2)}}
+}else return {err:authMsg(e)}}
+let d;try{d=await db.collection('usuarios').doc(u).get()}catch(e){await auth.signOut();return {err:'No se pudo leer tu cuenta ('+(e.code||e.message)+'). Revisa las reglas de Firestore.'}}
+if(u==='administrador'){
+const x0=d.exists?d.data():{};
+if(x0.estado!=='aprobado'||x0.rol!=='admin'){try{await db.collection('usuarios').doc(u).set({estado:'aprobado',rol:'admin',creado:x0.creado||new Date().toISOString().slice(0,10)},{merge:true})}catch(e){await auth.signOut();return {err:'No se pudo registrar al administrador ('+(e.code||e.message)+'). Revisa las reglas de Firestore.'}}}
+return {role:'admin'}}
 if(!d.exists){await auth.signOut();return {err:'Tu cuenta no está registrada. Solicítala de nuevo con tu DNI.'}}
 const x=d.data();
 if(x.estado!=='aprobado'){await auth.signOut();return {err:'Tu cuenta está pendiente de aprobación por el administrador. Podrás ingresar cuando sea aprobada.'}}
