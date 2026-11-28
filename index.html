@@ -22,7 +22,7 @@
 const $=id=>document.getElementById(id);
 const STORAGE='davase_salon_v4';
 /* ===== CONFIGURACIÓN FIREBASE: pega aquí los datos de tu proyecto (Configuración del proyecto > Tus apps > Web). Si apiKey está vacío, el sistema funciona solo en este navegador. ===== */
-const FIREBASE_CONFIG={apiKey:'AIzaSyCviCNdNpOkQ1uGhUT5wAiSPRDOpQGVUIM',authDomain:'salon-e8f8a.firebaseapp.com',projectId:'salon-e8f8a',storageBucket:'salon-e8f8a.firebasestorage.app',messagingSenderId:'143512731931',appId:'1:143512731931:web:7bca632d7a6661813f93be'};
+const FIREBASE_CONFIG={apiKey:'AIzaSyCviCNdNpOkQ1uGhUT5wAiSPRDOpQGVUIM',authDomain:'salon-e8f8a.firebaseapp.com',projectId:'salon-e8f8a',storageBucket:'salon-e8f8a.firebasestorage.app',messagingSenderId:'143512731931',appId:'1:143512731931:web:7bca632d7a6661813f93be',measurementId:'G-09HYJZ691C'};
 const CLOUD_WANTED=!!FIREBASE_CONFIG.apiKey,CLOUD=CLOUD_WANTED&&!!window.firebase,MAIL_DOM='davase.app';
 let db=null,auth=null,usersCache={};
 const sessionKey='davase_demo_session';
